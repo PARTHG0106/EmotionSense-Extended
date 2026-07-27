@@ -1,0 +1,107 @@
+.alert {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  /* Severity is carried by a left rule, not a coloured card background: a wall of tinted
+     cards makes everything look urgent and nothing look important. */
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+.alert--normal { border-left-color: var(--status-normal); }
+.alert--attention { border-left-color: var(--status-attention); }
+.alert--warning { border-left-color: var(--status-warning); }
+.alert--critical { border-left-color: var(--status-critical); }
+
+.alert__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.alert__time {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.alert__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.alert__fields {
+  display: grid;
+  grid-template-columns: minmax(150px, max-content) 1fr;
+  gap: var(--space-2) var(--space-5);
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.alert__fields dt {
+  color: var(--text-muted);
+}
+
+.alert__fields dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.alert__next {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.alert__review {
+  margin: 0 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.alert__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.alert__ack {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.alert__ack:hover {
+  background: var(--accent-soft);
+}
+
+.alert__evidence {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 640px) {
+  .alert__fields {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .alert__fields dd {
+    margin-bottom: var(--space-3);
+  }
+}

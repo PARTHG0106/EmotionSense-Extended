@@ -1,0 +1,84 @@
+.resident {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+.resident__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.resident__name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.resident__activity {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-base);
+}
+
+.resident__since {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.resident__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.resident__metrics dt {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+
+.resident__metrics dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.resident__confidence {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.resident__note {
+  margin: 0 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.resident__link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .resident__metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}

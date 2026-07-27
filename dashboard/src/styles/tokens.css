@@ -1,0 +1,77 @@
+/* Design tokens.
+ *
+ * Calm clinical, not control room. Muted teal is the only accent; saturated colour is
+ * reserved for status, so that a red badge always means something.
+ */
+
+:root {
+  --surface-page: #f8fafa;
+  --surface-card: #ffffff;
+  --surface-sunken: #f1f4f4;
+  --border-subtle: #e3e8e8;
+  --border-strong: #cbd4d3;
+
+  --text-primary: #16211f;
+  --text-secondary: #5a6866;
+  --text-muted: #8b9997;
+
+  --accent: #2e6f6a;
+  --accent-soft: #e8f1f0;
+
+  /* Status colours. All pass 4.5:1 against --surface-card. */
+  --status-normal: #2f7a55;
+  --status-normal-soft: #eaf4ee;
+  --status-attention: #a6811f;
+  --status-attention-soft: #fbf3e0;
+  --status-warning: #b4611c;
+  --status-warning-soft: #fdefe4;
+  --status-critical: #a32626;
+  --status-critical-soft: #fbeaea;
+
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-card: 0 1px 2px rgba(22, 33, 31, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* No decorative motion anywhere. Only state changes animate, and only briefly. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
