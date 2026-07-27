@@ -1,0 +1,79 @@
+# Local and single-site deployment.
+#
+# The perception worker is a separate service because it is the only GPU-bound component and
+# the only one that touches video. Keeping it separate means the API and dashboard survive a
+# camera or GPU failure, which degrades monitoring instead of losing the whole system.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wellbeing
+      POSTGRES_USER: wellbeing
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wellbeing -d wellbeing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      WELLBEING_DB_URL: postgresql+psycopg://wellbeing:${POSTGRES_PASSWORD}@db:5432/wellbeing
+      WELLBEING_CONFIG: /app/configs/default.yaml
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  perception:
+    build:
+      context: .
+      target: api
+    command: ["python", "-m", "wellbeing.pipeline.replay", "--config", "/app/configs/default.yaml"]
+    environment:
+      WELLBEING_DB_URL: postgresql+psycopg://wellbeing:${POSTGRES_PASSWORD}@db:5432/wellbeing
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    # Uncomment on a GPU host; CPU stub adapters are used otherwise.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
+    restart: unless-stopped
+
+  retention:
+    image: postgres:16-alpine
+    # Retention runs as its own scheduled job so privacy guarantees do not depend on the
+    # application staying healthy.
+    entrypoint:
+      ["sh", "-c", "while true; do psql \"$$PGURL\" -f /sql/retention.sql; sleep 86400; done"]
+    environment:
+      PGURL: postgresql://wellbeing:${POSTGRES_PASSWORD}@db:5432/wellbeing
+    volumes:
+      - ./sql:/sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
