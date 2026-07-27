@@ -1,0 +1,50 @@
+# Fall dataset spec.
+#
+# Deliberately mixes staged falls with hard negatives from unstaged home video. Training on
+# UP-Fall or Le2i alone produces a detector that fires on anyone sitting down quickly,
+# because those datasets contain almost no ordinary domestic movement.
+name: fall_lowres
+version: "1"
+target_short_side: 256
+max_short_side_upscale: false
+min_bbox_pixels: 24
+split_by: subject
+seed: 42
+notes: >-
+  Downscaled to CCTV-like resolution. Subject-disjoint splits. Hard negatives are weighted
+  to at least 5x the positive count, matching the real class ratio far better than a
+  balanced set does.
+label_map:
+  fall: fall
+  falling: fall
+  lying_after_fall: fall
+  sit_down: negative_sit
+  lie_down: negative_lie
+  bend_pick: negative_bend
+  kneel: negative_kneel
+  walk: negative_walk
+sources:
+  - name: UP-Fall Detection
+    license: research-only, cite the authors
+    modality: rgb+wearable
+    note: multi-view staged falls; use camera views only
+  - name: Le2i Fall Detection
+    license: research-only
+    modality: rgb
+    note: home and office rooms, closest to the deployment domain
+  - name: UR Fall Detection
+    license: research-only
+    modality: rgb+depth
+    note: depth is discarded; deployment is RGB CCTV
+  - name: Multicam Fall
+    license: research-only
+    modality: rgb
+    note: provides the multi-camera occlusion cases
+  - name: Charades (negatives)
+    license: non-commercial research
+    modality: rgb
+    note: source of unstaged domestic hard negatives
+  - name: Toyota Smarthome (negatives)
+    license: research agreement required
+    modality: rgb
+    note: elderly subjects performing ordinary ADLs; the most valuable negatives
