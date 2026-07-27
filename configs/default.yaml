@@ -1,0 +1,153 @@
+# Default configuration. Nothing in src/ may hardcode a threshold that appears here.
+# Copy to configs/local.yaml and override per site.
+
+site:
+  site_id: "demo-site"
+  timezone: "Asia/Kolkata"
+
+cameras:
+  - camera_id: "cam-living"
+    uri: "rtsp://127.0.0.1:8554/living"
+    zones: ["living_room", "chair", "kitchen_door"]
+    fps_target: 10
+    enabled: true
+  - camera_id: "cam-hall"
+    uri: "rtsp://127.0.0.1:8554/hall"
+    zones: ["hallway", "front_door", "bathroom_door"]
+    fps_target: 10
+    enabled: true
+
+# ---------------------------------------------------------------- L1 perception
+perception:
+  # "stub" adapters are deterministic and need no weights; swap by config only.
+  detector:
+    backend: "stub"          # stub | ultralytics | rtdetr
+    weights: "weights/yolo11m.pt"
+    device: "auto"           # auto | cuda | cpu
+    conf_threshold: 0.35
+    min_box_height_px: 48
+  tracker:
+    backend: "stub"          # stub | bytetrack | botsort
+    max_age_frames: 60
+    min_hits: 3
+    iou_threshold: 0.3
+  pose:
+    backend: "stub"          # stub | rtmpose | mediapipe
+    min_keypoint_conf: 0.30
+  reid:
+    backend: "stub"          # stub | osnet | fastreid
+    embedding_dim: 512
+    index: "faiss_flat_ip"
+    crop_quality:
+      min_blur_score: 25.0
+      min_height_px: 64
+      max_truncation: 0.35
+
+identity:
+  # Fused evidence accumulates over a track; a single frame never decides identity.
+  signal_weights:
+    body: 0.35
+    face: 0.30
+    gait: 0.20
+    anthropometry: 0.10
+    spatiotemporal_prior: 0.05
+  accept_threshold: 0.72       # below this -> unknown, never a guess
+  reject_threshold: 0.45
+  hysteresis_frames: 15        # frames of agreement before switching an assigned id
+  gallery:
+    body_prototype_ttl_hours: 36      # clothing changes daily; body appearance decays
+    face_prototype_ttl_hours: null    # long-lived
+    max_prototypes_per_signal: 24
+  visitor:
+    enroll_in_gallery: false          # visitors never consented; ephemeral ids only
+    purge_after_hours: 24
+
+# ------------------------------------------------------------------ L2 activity
+activity:
+  window_seconds: 4.0
+  window_stride_seconds: 1.0
+  min_event_duration_seconds: 3.0
+  adl:
+    backend: "stub"          # stub | videomae | stgcn
+    min_confidence: 0.55
+  posture:
+    lying_torso_angle_deg: 55.0        # torso closer to horizontal than this = lying
+    sitting_hip_knee_ratio: 0.55
+    stillness_speed_px_s: 8.0
+  fall:
+    # Rule-first. The learned model refines; the rule bounds behaviour on unseen sites.
+    centroid_drop_ratio: 0.40          # of body height
+    drop_window_seconds: 1.0
+    horizontal_hold_seconds: 3.0
+    post_event_stillness_seconds: 10.0
+    require_model_agreement: false     # rule alone may raise; model raises confidence
+    model_confidence_floor: 0.60
+  inactivity:
+    prolonged_minutes: 90
+    night_prolonged_minutes: 480
+
+# ------------------------------------------------------------------ L3 behavior
+behavior:
+  baseline:
+    window_days: 14
+    warmup_days: 14                   # anomaly alerts suppressed during warmup
+    statistic: "median_mad"           # robust: one hospital day must not reshape it
+    buckets: ["night", "morning", "afternoon", "evening"]
+    bucket_hours:
+      night: [0, 6]
+      morning: [6, 12]
+      afternoon: [12, 18]
+      evening: [18, 24]
+    separate_weekend: true
+    min_completeness: 0.60            # a camera outage day is excluded, not counted as 0
+  anomaly:
+    methods: ["zscore", "isolation_forest"]
+    attention_sigma: 1.5
+    warning_sigma: 2.5
+    max_alerts_per_resident_per_day: 3
+  trend:
+    window_days: 28
+    test: "mann_kendall"
+    p_value: 0.05
+    sustained_days_to_reclassify: 7   # sustained deviation becomes a trend, not spam
+
+# ----------------------------------------------------------------- L4 reasoning
+reasoning:
+  llm:
+    backend: "template"     # template | openai | anthropic ; template needs no network
+    model: "strongest-available"
+    max_output_tokens: 400
+    temperature: 0.2
+  require_all_explanation_fields: true
+  banned_phrases:
+    - "diagnosed"
+    - "has dementia"
+    - "is depressed"
+    - "symptoms of"
+    - "should take"
+    - "prescribe"
+  identity_confidence_floor: 0.60     # below: suppress behavioural claims, say why
+
+alerts:
+  severities: ["normal", "attention", "warning", "critical"]
+  critical_ack_timeout_seconds: 60
+  critical_kinds: ["fall", "prolonged_no_response", "night_unrecovered_lying"]
+  never_rate_limit: ["fall"]
+
+# -------------------------------------------------------------------- retention
+storage:
+  database_url: "postgresql+psycopg://wellbeing:wellbeing@localhost:5432/wellbeing"
+  redis_url: "redis://localhost:6379/0"
+  retention:
+    raw_frames: "never_persisted"
+    incident_clip_hours: 72
+    keypoints_days: 30
+    activity_events_days: 365
+    daily_aggregates_days: 730
+  encrypt_embeddings: true
+
+runtime:
+  backpressure: "drop_to_latest"      # never queue frames; being 40s behind is useless
+  max_perception_latency_ms: 150
+  degradation_ladder: ["full", "reduced_fps", "no_reid", "pose_safety_only", "ops_alert"]
+  seed: 42
